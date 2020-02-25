@@ -80,7 +80,9 @@ PostPatchFn PatchSchedGetaffinity(PrePatchArgs args) {
             return PPA_NOTHING;
         }
         // On success, the syscall returns the size of cpumask_t in bytes.
-        const int maxSize = MAX(1024, (1 << (ilog2(zinfo->numCores) + 1))) / 8;
+        int maxSize = -err;
+        // When the simulated number of cores is greater, extend cpumask_t.
+        maxSize = MAX(maxSize, (1 << (ilog2(cpuenumNumCpus(procIdx) - 1) + 1)) / 8 * 2);
         PIN_SetSyscallNumber(args.ctxt, args.std, maxSize);
         uint32_t linuxTid = PIN_GetSyscallArgument(args.ctxt, args.std, 0);
         uint32_t tid = (linuxTid == 0 ? args.tid : zinfo->sched->getTidFromLinuxTid(linuxTid));
